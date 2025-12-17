@@ -11,6 +11,7 @@ import {
 import { WordService } from './word.service';
 import { PDFExceptionFilter } from './filter/pdfException.filter';
 import { RequestData } from './reuest-data.dto';
+import { type Response } from 'express';
 
 @Controller('word')
 export class WordController {
@@ -18,7 +19,7 @@ export class WordController {
 
   @Post('send-message')
   @HttpCode(HttpStatus.OK)
-  @UseFilters(PDFExceptionFilter)
+  // @UseFilters(PDFExceptionFilter)
   @Header('Content-Type', 'application/pdf')
   @Header('Content-Disposition', 'attachment; filename="document.pdf"')
   async getResponse(
@@ -27,5 +28,6 @@ export class WordController {
     res: Response,
   ): Promise<void> {
     this.wordService.sendMessage(input, res);
+    // return;
   }
 }

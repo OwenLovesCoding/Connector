@@ -1,6 +1,8 @@
 import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -13,6 +15,7 @@ import PDFDocument from 'pdfkit';
 import fs, { createReadStream } from 'fs';
 import { RequestData } from './reuest-data.dto';
 import nodemailer from 'nodemailer';
+import { Response } from 'express';
 
 @Injectable()
 export class WordService {
@@ -21,26 +24,17 @@ export class WordService {
     private httpService: HttpService,
   ) {}
 
-  async sendMessage(input: RequestData, res: any): Promise<any> {
-    const geminiKey = this.configService.get<string>('GEMINI_API_KEY');
-    const ai = new GoogleGenAI({ apiKey: geminiKey });
+  async sendMessage(input: RequestData, res: Response): Promise<any> {
+    // const geminiKey = this.configService.get<string>('GEMINI_API_KEY');
+    // const ai = new GoogleGenAI({ apiKey: geminiKey });
 
     //Send to gemini
     try {
       // const response = await ai.models.generateContent({
       //   model: 'gemini-2.5-flash',
-      //   // config:{},
-      //   // contents: `You are a friend. Always return a JSON response with a context, and search word or phrase or summary
-      //   // It should be in this format:
-      //   // search: In here In here you output the phrase or summary or word that relates with the request.
-      //   // response: In here you put your response
-      //   // Now this is the text query - ${textStr}
-      //   // `,
-      // contents: input.message,
+      //   contents: `${input.message}`,
       // });
-      // console.log('This is the request:', textStr);
-      // return response.text;
-      // console.log(response.text);
+
       //convert to pdf
       // const doc = new PDFDocument();
       // doc.pipe(res);
@@ -50,32 +44,71 @@ export class WordService {
       //   .text(response.text, 100, 100);
       // doc.end();
 
+      this.scholarHandle(input);
+    } catch (err) {
+      // if (err instanceof Error) {
+      // console.log(err);
+      // throw new BadRequestException(err.message);
+      // if (err.message) {
+      //   console.log('without model response is here******');
+      //   this.scholarHandle(input);
+      // }
+      // }
+      // console.log(err);
+      // throw new InternalServerErrorException('There was an error');
+    } finally {
+      res.send();
+    }
+  }
+
+  async scholarHandle(input, response?: string) {
+    try {
       const response$ = this.httpService.get(
-        `https://api.crossref.org/v1/works?rows=10&select=DOI,prefix,title&order=desc&mailto=${input.email}`,
+        `https://api.crossref.org/v1/works?rows=10&select=DOI,prefix,title,URL&order=desc&mailto=${input.email}&query.bibliographic=${input.message}`,
       );
       const res = await firstValueFrom(response$);
 
-      console.log(res.data);
+      // console.log(res.data);
       const items = res.data['message']['items'];
       if (res.data)
-        return this.handleEmailSending(input.email, input.message, items);
+        this.handleEmailSending(
+          input.email,
+          input.message,
+          items,
+          response as string,
+        );
       return;
-    } catch (err) {
-      if (err instanceof Error) {
-        console.log(err);
-
-        throw new BadRequestException(err.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
       }
-      throw new InternalServerErrorException('There was an error');
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
   }
 
   async handleEmailSending(
     to: string,
     subject: string,
-    items: any,
+    items: any[],
+    response: string,
   ): Promise<void> {
     const server = this.configService.get<string>('BREVO_SMTP_SERVER');
+
+    const html =
+      items &&
+      items.length >= 0 &&
+      items
+        .map((e: any, i: number) => {
+          if (response != undefined) {
+            return `<p>${response}</p><div><p>${i + 1}*</p><p>DOI:${e.DOI}</p><p>Prefix:${e.prefix}</p><p>Title:${e.title[0]}</p>Link:${e.URL}</div>\n`;
+          }
+          return `<div><p>${i + 1}*</p><p>DOI:${e.DOI}</p><p>Prefix:${e.prefix}</p><p>Title:${e.title[0]}</p>Link:${e.URL}</div>\n`;
+        })
+        .join('   ');
+
+    // console.log('this is the resources from items', html);
+    // console.log(resources);
+    // return;
     const login = this.configService.get<string>('BREVO_LOGIN');
     const password = this.configService.get<string>('BREVO_PASSWORD');
 
@@ -92,25 +125,18 @@ export class WordService {
 
       // const allData = [];
 
-      const resources = items.map((e: any, i: number) => {
-        return `
-        ${e + 1}*
+      // (async () => {
+      const info = await transporter.sendMail({
+        from: '"Owen Iraoya" <oweniraoya7@gmail.com>',
+        to,
+        subject,
+        text: 'We got world class resources just for you...', // plain‑text body
+        html, // HTML body
+      });
 
-        DOI: ${e.DOI},
-        Prefix: ${e.prefix},
-        Title: ${e.title[0]}
-        `;
-      })(async () => {
-        const info = await transporter.sendMail({
-          from: '"Owen Iraoya" <oweniraoya7@gmail.com>',
-          to,
-          subject,
-          text: 'We got world class resources just for you...', // plain‑text body
-          html: resources, // HTML body
-        });
-
-        console.log('Message sent:', info.messageId);
-      })();
+      console.log('Message sent:', info.messageId);
+      return;
+      // })();
     } catch (err) {
       if (err instanceof Error) {
         throw new BadRequestException(err.message);
