@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { WordService } from './word.service';
 import { PDFExceptionFilter } from './filter/pdfException.filter';
+import { RequestData } from './reuest-data.dto';
 
 @Controller('word')
 export class WordController {
@@ -20,7 +21,11 @@ export class WordController {
   @UseFilters(PDFExceptionFilter)
   @Header('Content-Type', 'application/pdf')
   @Header('Content-Disposition', 'attachment; filename="document.pdf"')
-  async getResponse(@Body() message: string, @Res() res: Response) {
-    return this.wordService.sendMessage(message, res);
+  async getResponse(
+    @Body() input: any,
+    @Res()
+    res: Response,
+  ): Promise<void> {
+    this.wordService.sendMessage(input, res);
   }
 }
