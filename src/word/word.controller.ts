@@ -20,8 +20,8 @@ export class WordController {
   @Post('send-message')
   @HttpCode(HttpStatus.OK)
   // @UseFilters(PDFExceptionFilter)
-  @Header('Content-Type', 'application/pdf')
-  @Header('Content-Disposition', 'attachment; filename="document.pdf"')
+  // @Header('Content-Type', 'application/pdf')
+  // @Header('Content-Disposition', 'attachment; filename="document.pdf"')
   async getResponse(
     @Body() input: any,
     @Res()
