@@ -71,7 +71,6 @@ export class WordService {
       );
       const res = await firstValueFrom(response$);
 
-      // console.log(res.data);
       const items: any[] = res.data['message']['items'];
       if (res.data)
         this.handleEmailSending(
