@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Header,
   HttpCode,
   HttpStatus,
@@ -29,5 +30,10 @@ export class WordController {
   ): Promise<void> {
     this.wordService.sendMessage(input, res);
     // return;
+  }
+
+  @Get('track-end')
+  async sendInfo(): Promise<string> {
+    return 'This is the endpoint';
   }
 }
