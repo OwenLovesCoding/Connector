@@ -14,7 +14,7 @@ async function bootstrapServer() {
     const app = await NestFactory.create(
       AppModule,
       adapter,
-      { logger: false }, // Optional: disable NestJS logger in production
+      { logger: false, cors: { origin: '*', allowedHeaders: '*' } }, // Optional: disable NestJS logger in production
     );
 
     app.enableCors(); // Enable CORS if needed
