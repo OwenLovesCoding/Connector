@@ -65,6 +65,9 @@ export class WordService {
     try {
       const response$ = this.httpService.get(
         `https://api.crossref.org/v1/works?rows=10&select=DOI,prefix,title,URL&order=desc&mailto=${input.email}&query.bibliographic=${input.message}`,
+        {
+          timeout: 60000,
+        },
       );
       const res = await firstValueFrom(response$);
 
