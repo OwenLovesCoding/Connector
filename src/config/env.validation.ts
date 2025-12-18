@@ -13,6 +13,7 @@ export const envValidationSchema = Joi.object({
   BREVO_PORT: Joi.number().required(),
   BREVO_LOGIN: Joi.string().required(),
   BREVO_PASSWORD: Joi.string().required(),
+  BREVO_SENDER: Joi.string().required(),
 
   //GEMINI
   GEMINI_API_KEY: Joi.string().required(),

@@ -111,15 +111,25 @@ export class WordService {
     // return;
     const login = this.configService.get<string>('BREVO_LOGIN');
     const password = this.configService.get<string>('BREVO_PASSWORD');
+    const sender = this.configService.get<string>('BREVO_SENDER');
+    const port = this.configService.get<number>('BREVO_PORT');
 
     try {
       const transporter = nodemailer.createTransport({
         host: server,
-        port: 587,
+        port: Number(port),
         secure: false, // true for 465, false for other ports
         auth: {
           user: login,
           pass: password,
+        },
+
+        // Vercel-specific settings:
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+        tls: {
+          rejectUnauthorized: false, // May help with SSL issues
         },
       });
 
@@ -127,7 +137,7 @@ export class WordService {
 
       // (async () => {
       const info = await transporter.sendMail({
-        from: '"Owen Iraoya" <oweniraoya7@gmail.com>',
+        from: `"Owen Iraoya" <${sender}>`,
         to,
         subject,
         text: 'We got world class resources just for you...', // plain‑text body
