@@ -93,7 +93,6 @@ export class WordService {
     response: string,
   ): Promise<void> {
     const server = this.configService.get<string>('BREVO_SMTP_SERVER');
-    const brevoApiKey = this.configService.get<string>('BREVO_API_KEY');
 
     const html =
       items &&
@@ -110,59 +109,32 @@ export class WordService {
     // console.log('this is the resources from items', html);
     // console.log(resources);
     // return;
-    // const login = this.configService.get<string>('BREVO_LOGIN');
-    // const password = this.configService.get<string>('BREVO_PASSWORD');
-
-    const bodyForm = {
-      name: subject,
-      subject,
-      sender: { name: 'from Connector', email: 'connector@gmail.com' },
-      type: 'classic',
-      htmlContent: html,
-      recipients: { emails: [to] },
-    };
+    const login = this.configService.get<string>('BREVO_LOGIN');
+    const password = this.configService.get<string>('BREVO_PASSWORD');
 
     try {
-      const response$ = this.httpService.post(
-        'https://api.brevo.com/v3/emailCampaigns',
-        bodyForm,
-        {
-          headers: {
-            api_key: brevoApiKey,
-          },
+      const transporter = nodemailer.createTransport({
+        host: server,
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: login,
+          pass: password,
         },
-      );
+      });
 
-      const emailRes = await firstValueFrom(response$);
+      // const allData = [];
 
-      if (emailRes.data) {
-        console.log('Email has been sent', emailRes.data);
-      } else {
-        console.log('email has not been sent');
-      }
+      // (async () => {
+      const info = await transporter.sendMail({
+        from: '"Owen Iraoya" <oweniraoya7@gmail.com>',
+        to,
+        subject,
+        text: 'We got world class resources just for you...', // plain‑text body
+        html, // HTML body
+      });
 
-      // const transporter = nodemailer.createTransport({
-      //   host: server,
-      //   port: 587,
-      //   secure: false, // true for 465, false for other ports
-      //   auth: {
-      //     user: login,
-      //     pass: password,
-      //   },
-      // });
-
-      // // const allData = [];
-
-      // // (async () => {
-      // const info = await transporter.sendMail({
-      //   from: '"Owen Iraoya" <oweniraoya7@gmail.com>',
-      //   to,
-      //   subject,
-      //   text: 'We got world class resources just for you...', // plain‑text body
-      //   html, // HTML body
-      // });
-
-      // console.log('Message sent:', info.messageId);
+      console.log('Message sent:', info.messageId);
       return;
       // })();
     } catch (err) {
