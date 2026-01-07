@@ -11,7 +11,7 @@ User Request → Gemini AI Analysis → { If relevant → AI response }
                                            ↓
                                    Email via Brevo SMTP
 ✨ Key Innovation
-Unlike the C# version, this app adds AI intelligence:
+Unlike the C# version [what-is](https://github.com/OwenLovesCoding/what-is), this app adds AI intelligence:
 
 Gemini AI first analyzes if the query deserves an AI response
 
